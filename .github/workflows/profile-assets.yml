@@ -1,0 +1,97 @@
+name: Update profile graphics
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 1 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/profile-assets.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-profile-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout profile repository
+        uses: actions/checkout@v4
+
+      - name: Prepare asset directories
+        run: |
+          mkdir -p profile-summary-card-output/github_dark
+          mkdir -p .github/assets
+
+      - name: Download GitHub analytics cards
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          download_svg() {
+            url="$1"
+            output="$2"
+            tmp="${output}.tmp"
+
+            curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "$url" -o "$tmp"
+            grep -qi "<svg" "$tmp"
+            mv "$tmp" "$output"
+          }
+
+          base="https://github-profile-summary-cards.vercel.app/api/cards"
+
+          download_svg \
+            "$base/stats?username=Blulyk&theme=github_dark&animation=load" \
+            "profile-summary-card-output/github_dark/3-stats.svg"
+
+          download_svg \
+            "$base/repos-per-language?username=Blulyk&theme=github_dark&animation=load" \
+            "profile-summary-card-output/github_dark/1-repos-per-language.svg"
+
+          download_svg \
+            "$base/most-commit-language?username=Blulyk&theme=github_dark&animation=load" \
+            "profile-summary-card-output/github_dark/2-most-commit-language.svg"
+
+          download_svg \
+            "$base/productive-time?username=Blulyk&theme=github_dark&animation=load&utcOffset=2" \
+            "profile-summary-card-output/github_dark/4-productive-time.svg"
+
+          download_svg \
+            "$base/profile-details?username=Blulyk&theme=github_dark&animation=load" \
+            "profile-summary-card-output/github_dark/0-profile-details.svg"
+
+      - name: Generate GitHub trophy card
+        uses: soulteary/github-profile-trophy-action@v1
+        with:
+          options: "username=Blulyk&theme=algolia&column=6&no-frame=true&no-bg=true&margin-w=8&margin-h=8"
+          path: .github/assets/trophy.svg
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify generated graphics
+        run: |
+          test -s profile-summary-card-output/github_dark/0-profile-details.svg
+          test -s profile-summary-card-output/github_dark/1-repos-per-language.svg
+          test -s profile-summary-card-output/github_dark/2-most-commit-language.svg
+          test -s profile-summary-card-output/github_dark/3-stats.svg
+          test -s profile-summary-card-output/github_dark/4-productive-time.svg
+          test -s .github/assets/trophy.svg
+
+      - name: Commit updated graphics
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add profile-summary-card-output .github/assets/trophy.svg
+
+          if git diff --cached --quiet; then
+            echo "Profile graphics are already up to date."
+            exit 0
+          fi
+
+          git commit -m "chore: update profile graphics"
+          git push
