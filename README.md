@@ -78,9 +78,9 @@ Umbrel app to forward **Telegram messages to n8n and WhatsApp**.
 </td>
 <td width="50%" valign="top">
 
-### 🏠 [umbrel-app-store](https://github.com/Blulyk/umbrel-app-store)
+### 🏠 [zima-app-store](https://github.com/Blulyk/zima-app-store)
 
-My custom **Umbrel App Store** and self-hosting experiments.
+My custom **ZimaOS App Store** and self-hosting experiments.
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
